@@ -1,0 +1,9 @@
+## Interface: 30300
+## Author: Cynyr
+## Version: 0.1
+## Title: oUF Power Bar
+## Notes: Just another oUF layout
+## RequiredDeps: oUF
+## OptionalDeps: oUF_DebuffHighlight, oUF_Experience, oUF_MovableFrames, oUF_BarFader
+
+oUF_PowerBar.xml
