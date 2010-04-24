@@ -8,26 +8,28 @@
 --some settings have been omved to here, for easier changing
 local minalpha = 0
 local maxalpha = 1
-local castbaroffset = 80
-local castbarheight = 16
-local castbarbuttonsize = 21
-local playertargetheight = 27
-local playertargetwidth = 180
-local petheight = 27
-local petwidth = 130
-local focustargettargetheight = 20
-local focustargettargetwidth = playertargetwidth * .80
-local debuffsize = 10
-local hideparty=true
-local showenergybar=true
-local pbn="oUF_Cynyr_power"
+local pbn="oUF_PowerBar"
+local height=8
+local width=150
+--local castbaroffset = 80
+--local castbarheight = 16
+--local castbarbuttonsize = 21
+--local playertargetheight = 27
+--local playertargetwidth = 180
+--local petheight = 27
+--local petwidth = 130
+--local focustargettargetheight = 20
+--local focustargettargetwidth = playertargetwidth * .80
+--local debuffsize = 10
+--local hideparty=true
+--local showenergybar=true
 
 
 
 local max = math.max
 local floor = math.floor
 
-local minimalist = [=[Interface\AddOns\oUF_Cynyr\media\minimalist]=]
+local minimalist = [=[Interface\AddOns\oUF_PowerBar\media\minimalist]=]
 local backdrop = {
 	bgFile = [=[Interface\ChatFrame\ChatFrameBackground]=],
 	insets = {top = -1, bottom = -1, left = -1, right = -1}
@@ -159,67 +161,57 @@ local function customFilter(icons, unit, icon, name, rank, texture, count, dtype
 end
 
 local function style(self, unit)
-	self.colors = colors
-	self.menu = menu
-
-	self:RegisterForClicks('AnyUp')
-	self:SetAttribute('type2', 'menu')
-
-	self:SetScript('OnEnter', UnitFrame_OnEnter)
-	self:SetScript('OnLeave', UnitFrame_OnLeave)
-
-	self:SetBackdrop(backdrop)
-	self:SetBackdropColor(0, 0, 0)
-    self.Health = CreateFrame('StatusBar', nil, self)
-    self.Health:SetPoint('TOPRIGHT')
-    self.Health:SetPoint('TOPLEFT')
-    self.Health:SetStatusBarTexture(minimalist)
-    self.Health:SetStatusBarColor(0.25, 0.25, 0.35)
-    --self.Health:SetHeight((unit == 'focus' or unit == 'targettarget') and 20 or 22)
-    self.Health:SetHeight(22)
-    self.Health.frequentUpdates = true
-
-    self.Health.bg = self.Health:CreateTexture(nil, 'BORDER')
-    self.Health.bg:SetAllPoints(self.Health)
-    self.Health.bg:SetTexture(0.3, 0.3, 0.3)
-	
-	self.Power = CreateFrame('StatusBar', nil, self)
-	self.Power:SetPoint('BOTTOMRIGHT')
-	self.Power:SetPoint('BOTTOMLEFT')
-	self.Power:SetPoint('TOP', self.Health, 'BOTTOM', 0, -1)
-	self.Power:SetStatusBarTexture(minimalist)
-	self.Power.frequentUpdates = true
-
-	--self.Power.colorClass = true
-	--self.Power.colorTapping = true
-	--self.Power.colorDisconnected = true
-	--self.Power.colorReaction = unit ~= 'pet'
-	--self.Power.colorHappiness = unit == 'pet'
-	--self.Power.colorPower = unit == 'pet'
-
-	self.Power.bg = self.Power:CreateTexture(nil, 'BORDER')
-	self.Power.bg:SetAllPoints(self.Power)
-	self.Power.bg:SetTexture([=[Interface\ChatFrame\ChatFrameBackground]=])
-	self.Power.bg.multiplier = 0.3
-
-	local power = self.Health:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmallLeft')
-	power:SetPoint('LEFT', self.Health, 2, -1)
-	power.frequentUpdates = 0.1
-	self:Tag(power, '[ppower][( )druidpower]')
-
-	self.PostUpdatePower = updatePower
-    if(unit=="player" and IsAddOnLoaded("oUF_BarFader")) then
-        self.BarFade = true
-        self.BarFaderMinAlpha = minalpha
-        self.BarFaderMaxAlpha = maxalpha
+    if((select(2, UnitClass('player')) == 'ROGUE') or 
+       (select(2, UnitClass('player')) == 'DRUID')
+       ) then
+	    self.colors = colors
+	    --self.menu = menu
+        
+	    self:RegisterForClicks('AnyUp')
+	    self:SetAttribute('type2', 'menu')
+        
+	    self:SetScript('OnEnter', UnitFrame_OnEnter)
+	    self:SetScript('OnLeave', UnitFrame_OnLeave)
+        
+        self:SetAttribute('initial-height', height)
+	    self:SetAttribute('initial-width', width)
+        
+	    self:SetBackdrop(backdrop)
+	    self:SetBackdropColor(0, 0, 0)
+	    
+	    self.Power = CreateFrame('StatusBar', nil, self)
+        self.Power:SetAllPoints()
+	    self.Power:SetStatusBarTexture(minimalist)
+	    self.Power.frequentUpdates = true
+        
+	    self.Power.colorClass = true
+	    self.Power.colorTapping = true
+	    self.Power.colorDisconnected = true
+	    self.Power.colorReaction = unit ~= 'pet'
+	    self.Power.colorHappiness = unit == 'pet'
+	    self.Power.colorPower = unit == 'pet'
+        
+	    self.Power.bg = self.Power:CreateTexture(nil, 'BORDER')
+	    self.Power.bg:SetAllPoints(self.Power)
+	    self.Power.bg:SetTexture([=[Interface\ChatFrame\ChatFrameBackground]=])
+	    self.Power.bg.multiplier = 0.3
+        
+	    local power = self.Power:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmallLeft')
+	    power:SetPoint('CENTER', self.Power, 'CENTER')
+	    power.frequentUpdates = 0.1
+	    self:Tag(power, '[ppower][( )druidpower]')
+        
+        if(unit=="player" and IsAddOnLoaded("oUF_BarFader")) then
+            self.BarFade = true
+            self.BarFaderMinAlpha = minalpha
+            self.BarFaderMaxAlpha = maxalpha
+        end
+        self.MoveableFrames = true
     end
-	--self.DebuffHighlightBackdrop = true
-	--self.DebuffHighlightFilter = true
-    self.MoveableFrames = true
 end
 
-oUF:RegisterStyle('Cynyr', style)
-oUF:SetActiveStyle('Cynyr')
+oUF:RegisterStyle('PowerBar', style)
+oUF:SetActiveStyle('PowerBar')
 
-oUF:Spawn('player', "oUF_Cynyr_player"):SetPoint('CENTER', UIParent, -220, -250)
+oUF:Spawn('player', pbn):SetPoint('CENTER', UIParent, 'CENTER')
 
