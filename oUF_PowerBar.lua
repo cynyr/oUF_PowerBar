@@ -1,34 +1,24 @@
 --[[
 
+  Cynyr's Modification of the below authors mod
+
+--]]
+
+--[[
+
   Adrian L Lange grants anyone the right to use this work for any purpose,
   without any conditions, unless such conditions are required by law.
 
 --]]
 
---some settings have been omved to here, for easier changing
-local minalpha = 0
-local maxalpha = 1
-local pbn="oUF_PowerBar"
-local height=8
-local width=150
---local castbaroffset = 80
---local castbarheight = 16
---local castbarbuttonsize = 21
---local playertargetheight = 27
---local playertargetwidth = 180
---local petheight = 27
---local petwidth = 130
---local focustargettargetheight = 20
---local focustargettargetwidth = playertargetwidth * .80
---local debuffsize = 10
---local hideparty=true
---local showenergybar=true
+--some settings have been moved to here, for easier changing
+local minalpha = 0          --Minimum alpha to show the power bar at(OOC)
+local maxalpha = 1          --Maximum alpha to show the power bar at(combat)
+local pbn="oUF_PowerBar"    --Nice place for the name of the bar
+local height=8              --Height of the power bar
+local width=150             --Width of the power bar
 
-
-
-local max = math.max
-local floor = math.floor
-
+--The texture for the bar.
 local minimalist = [=[Interface\AddOns\oUF_PowerBar\media\minimalist]=]
 local backdrop = {
 	bgFile = [=[Interface\ChatFrame\ChatFrameBackground]=],
@@ -51,15 +41,7 @@ local colors = setmetatable({
 	}, {__index = oUF.colors.runes})
 }, {__index = oUF.colors})
 
-local buffFilter = {
-	[GetSpellInfo(62600)] = true,
-	[GetSpellInfo(61336)] = true,
-	[GetSpellInfo(52610)] = true,
-	[GetSpellInfo(22842)] = true,
-	[GetSpellInfo(22812)] = true,
-	[GetSpellInfo(16870)] = true
-}
-
+--Function left in in case i decide to add the menu to that bar again.
 local function menu(self)
 	local drop = _G[string.gsub(self.unit, '(.)', string.upper, 1) .. 'FrameDropDown']
 	if(drop) then
@@ -67,97 +49,18 @@ local function menu(self)
 	end
 end
 
-local function updateCombo(self, event, unit)
-	if(unit == PlayerFrame.unit and unit ~= self.CPoints.unit) then
-		self.CPoints.unit = unit
-	end
+local function oncombat(self)
+    self:Show()
+    self.Power:Show()
+    self:SetBackdropColor(0, 0, 0, 1)
+    DEFAULT_CHAT_FRAME:AddMessage("SHOW!")
 end
 
-local function updatePower(self, event, unit, bar, minVal, maxVal)
-	if(unit ~= 'target') then 
-        return
-    end
-
-	if(maxVal ~= 0) then
-		self.Health:SetHeight(22)
-		bar:Show()
-	else
-		self.Health:SetHeight(27)
-		bar:Hide()
-	end
-end
-
-local function castIcon(self, event, unit)
-	local castbar = self.Castbar
-	if(castbar.interrupt) then
-		castbar.Button:SetBackdropColor(0, 0.9, 1)
-	else
-		castbar.Button:SetBackdropColor(0, 0, 0)
-	end
-end
-
-local function castTime(self, duration)
-	if(self.channeling) then
-		self.Time:SetFormattedText('%.1f ', duration)
-	elseif(self.casting) then
-		self.Time:SetFormattedText('%.1f ', self.max - duration)
-	end
-end
-
-local function updateTime(self, elapsed)
-	self.remaining = max(self.remaining - elapsed, 0)
-	self.time:SetText(self.remaining < 90 and floor(self.remaining) or '')
-end
-
-local function updateBuff(self, icons, unit, icon, index)
-	local _, _, _, _, _, duration, expiration = UnitAura(unit, index, icon.filter)
-
-	if(duration > 0 and expiration) then
-		icon.remaining = expiration - GetTime()
-		icon:SetScript('OnUpdate', updateTime)
-	else
-		icon:SetScript('OnUpdate', nil)
-		icon.time:SetText()
-	end
-end
-
-local function updateDebuff(self, icons, unit, icon, index)
-	local _, _, _, _, dtype = UnitAura(unit, index, icon.filter)
-
-	if(icon.debuff) then
-		if(not UnitIsFriend('player', unit) and icon.owner ~= 'player' and icon.owner ~= 'vehicle') then
-			icon:SetBackdropColor(0, 0, 0)
-			icon.icon:SetDesaturated(true)
-		else
-			local color = DebuffTypeColor[dtype] or DebuffTypeColor.none
-			icon:SetBackdropColor(color.r * 0.6, color.g * 0.6, color.b * 0.6)
-			icon.icon:SetDesaturated(false)
-		end
-	end
-end
-
-local function createAura(self, button, icons)
-	icons.showDebuffType = true
-
-	button.cd:SetReverse()
-	button:SetBackdrop(backdrop)
-	button:SetBackdropColor(0, 0, 0)
-	button.icon:SetTexCoord(0.06, 0.94, 0.06, 0.94)
-	button.icon:SetDrawLayer('ARTWORK')
-	button.overlay:SetTexture()
-
-	if(self.unit == 'player') then
-		icons.disableCooldown = true
-
-		button.time = button:CreateFontString(nil, 'OVERLAY', 'NumberFontNormal')
-		button.time:SetPoint('TOPLEFT', button)
-	end
-end
-
-local function customFilter(icons, unit, icon, name, rank, texture, count, dtype, duration, expiration, caster)
-	if(buffFilter[name] and caster == 'player') then
-		return true
-	end
+local function onnocombat(self)
+    self:Hide()
+    self.Power:Hide()
+    self:SetBackdropColor(0, 0, 0, 0)
+    DEFAULT_CHAT_FRAME:AddMessage("HIDE!")
 end
 
 local function style(self, unit)
@@ -167,51 +70,110 @@ local function style(self, unit)
 	    self.colors = colors
 	    --self.menu = menu
         
-	    self:RegisterForClicks('AnyUp')
-	    self:SetAttribute('type2', 'menu')
+        --not having the below should make it clickthough-able.
+	    --self:RegisterForClicks('AnyUp')
         
-	    self:SetScript('OnEnter', UnitFrame_OnEnter)
-	    self:SetScript('OnLeave', UnitFrame_OnLeave)
-        
+        --set the size of the frame.
         self:SetAttribute('initial-height', height)
 	    self:SetAttribute('initial-width', width)
         
+        --set the backdrop
 	    self:SetBackdrop(backdrop)
-	    self:SetBackdropColor(0, 0, 0)
+	    self:SetBackdropColor(0, 0, 0, 1)
 	    
+        --create the a bar
 	    self.Power = CreateFrame('StatusBar', nil, self)
         self.Power:SetAllPoints()
 	    self.Power:SetStatusBarTexture(minimalist)
 	    self.Power.frequentUpdates = true
         
+        --color the bar, not all of these are needed i'm sure, but ohh well.
 	    self.Power.colorClass = true
-	    self.Power.colorTapping = true
-	    self.Power.colorDisconnected = true
-	    self.Power.colorReaction = unit ~= 'pet'
-	    self.Power.colorHappiness = unit == 'pet'
-	    self.Power.colorPower = unit == 'pet'
+	    --self.Power.colorTapping = true
+	    --self.Power.colorDisconnected = true
+	    --self.Power.colorReaction = unit ~= 'pet'
+	    --self.Power.colorHappiness = unit == 'pet'
+	    --self.Power.colorPower = unit == 'pet'
         
-	    self.Power.bg = self.Power:CreateTexture(nil, 'BORDER')
-	    self.Power.bg:SetAllPoints(self.Power)
-	    self.Power.bg:SetTexture([=[Interface\ChatFrame\ChatFrameBackground]=])
-	    self.Power.bg.multiplier = 0.3
-        
+        --get a font string and set it to the amount of power.
 	    local power = self.Power:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmallLeft')
 	    power:SetPoint('CENTER', self.Power, 'CENTER')
 	    power.frequentUpdates = 0.1
 	    self:Tag(power, '[ppower][( )druidpower]')
         
+        --Use oUF_BarFader to fade the bar.
         if(unit=="player" and IsAddOnLoaded("oUF_BarFader")) then
             self.BarFade = true
             self.BarFaderMinAlpha = minalpha
             self.BarFaderMaxAlpha = maxalpha
         end
-        self.MoveableFrames = true
+        --enable /omf for moving the frame.
+        --actully /omf doesn't need addon support, but the otherone does.
     end
+    self.Power:Hide()
+    self:Hide()
+    self:SetBackdropColor(0, 0, 0, 0)
+    if (select(2, UnitClass('player')) == 'ROGUE') then 
+        statestr = '[combat] bar; nobar'
+    elseif (select(2, UnitClass('player')) == 'DRUID') then
+        statestr = '[stance:3,combat] bar; nobar'
+    end
+    statestr = '[combat] bar; nobar'
+    RegisterStateDriver(self, 'bar', statestr)
+    self:SetAttribute('_onstate-bar', [[
+    if(newstate == 'bar') then
+			self:Show()
+	else
+			self:Hide()
+	end
+    ]])
+    self:RegisterEvent('PLAYER_REGEN_DISABLED', oncombat)
+    self:RegisterEvent('PLAYER_REGEN_ENABLED', onnocombat)
+    --self.Power:Execute([[ POWER_FRAMES = newtable() ]])
+    --self.Power:SetFrameRef("powerFrame", self)
+    --self.Power:Execute([[
+		--local frame = self:GetFrameRef("powerFrame")
+		--table.insert(POWER_FRAMES, frame)
+    --]])
+
+
 end
 
+--make sure oUF knows about us and uses us.
 oUF:RegisterStyle('PowerBar', style)
 oUF:SetActiveStyle('PowerBar')
 
+--spawn the frame, needs to be tied to player.
+--no support for other units is present
 oUF:Spawn('player', pbn):SetPoint('CENTER', UIParent, 'CENTER')
 
+if(select(2, UnitClass('player')) == 'DRUID') then
+    local _STATE = CreateFrame("Frame", nil, UIParent, 'SecureHandlerStateTemplate')
+    RegisterStateDriver(_STATE, 'kitty', '[stance:3,combat] cat; nocat')
+ 
+    _STATE:SetAttribute('_onstate-kitty', [[
+    if(newstate == 'cat') then
+        for k, frame in pairs(CAT_FRAMES) do
+            frame:SetAttribute('unit', frame:GetAttribute('oldUnit'))
+            frame:SetAttribute('oldUnit', nil)
+        end
+    else
+        for k, frame in pairs(CAT_FRAMES) do
+            frame:SetAttribute('oldUnit', frame:GetAttribute('unit'))
+            frame:SetAttribute('unit', nil)
+        end
+    end
+    ]])
+    _STATE:Execute[[
+    CAT_FRAMES = newtable()
+    ]]
+ 
+    -- The frames in question.
+    for _, frame in pairs{
+        player,
+        --target,
+    } do
+        _STATE:SetFrameRef('frame', frame)
+        _STATE:Execute[[table.insert(CAT_FRAMES, self:GetFrameRef'frame')]]
+    end
+end
