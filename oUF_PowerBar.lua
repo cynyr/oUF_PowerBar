@@ -134,21 +134,21 @@ if(select(2, UnitClass('player')) == 'DRUID') then
     RegisterStateDriver(_STATE, 'kitty', '[stance:3,combat] cat; nocat')
  
     _STATE:SetAttribute('_onstate-kitty', [[
-    DEFAULT_CHAT_FRAME:AddMessage("CHANGE!")
+    Print("CHANGE!")
     if(newstate == 'cat') then
         for k, frame in pairs(CAT_FRAMES) do
-            --frame:SetAttribute('unit', frame:GetAttribute('oldUnit'))
-            --frame:SetAttribute('oldUnit', nil)
+            frame:SetAttribute('unit', frame:GetAttribute('oldUnit'))
+            frame:SetAttribute('oldUnit', nil)
             frame:Show()
-            DEFAULT_CHAT_FRAME:AddMessage("SHOW!")
+            Print("SHOW!")
         end
     else
         for k, frame in pairs(CAT_FRAMES) do
-            --frame:SetAttribute('oldUnit', frame:GetAttribute('unit'))
-            --frame:SetAttribute('unit', nil)
+            frame:SetAttribute('oldUnit', frame:GetAttribute('unit'))
+            frame:SetAttribute('unit', nil)
             frame:Hide()
             frame:SetBackdropColor(0, 0, 0, 0)
-            DEFAULT_CHAT_FRAME:AddMessage("HIDE!")
+            Print("HIDE!")
         end
     end
     ]])
