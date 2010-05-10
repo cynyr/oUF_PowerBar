@@ -49,26 +49,11 @@ local function menu(self)
 	end
 end
 
-local function oncombat(self)
-    self:Show()
-    self.Power:Show()
-    self:SetBackdropColor(0, 0, 0, 1)
-    DEFAULT_CHAT_FRAME:AddMessage("SHOW!")
-end
-
-local function onnocombat(self)
-    self:Hide()
-    self.Power:Hide()
-    self:SetBackdropColor(0, 0, 0, 0)
-    DEFAULT_CHAT_FRAME:AddMessage("HIDE!")
-end
-
 local function style(self, unit)
     if((select(2, UnitClass('player')) == 'ROGUE') or 
        (select(2, UnitClass('player')) == 'DRUID')
        ) then
 	    self.colors = colors
-	    --self.menu = menu
         
         --not having the below should make it clickthough-able.
 	    --self:RegisterForClicks('AnyUp')
@@ -79,7 +64,7 @@ local function style(self, unit)
         
         --set the backdrop
 	    self:SetBackdrop(backdrop)
-	    self:SetBackdropColor(0, 0, 0, 1)
+	    self:SetBackdropColor(0, 0, 0, 0.5)
 	    
         --create the a bar
 	    self.Power = CreateFrame('StatusBar', nil, self)
@@ -89,11 +74,11 @@ local function style(self, unit)
         
         --color the bar, not all of these are needed i'm sure, but ohh well.
 	    self.Power.colorClass = true
-	    --self.Power.colorTapping = true
-	    --self.Power.colorDisconnected = true
-	    --self.Power.colorReaction = unit ~= 'pet'
-	    --self.Power.colorHappiness = unit == 'pet'
-	    --self.Power.colorPower = unit == 'pet'
+	    self.Power.colorTapping = true
+	    self.Power.colorDisconnected = true
+	    self.Power.colorReaction = unit ~= 'pet'
+	    self.Power.colorHappiness = unit == 'pet'
+	    self.Power.colorPower = unit == 'pet'
         
         --get a font string and set it to the amount of power.
 	    local power = self.Power:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmallLeft')
@@ -110,11 +95,6 @@ local function style(self, unit)
         --enable /omf for moving the frame.
         --actully /omf doesn't need addon support, but the otherone does.
     end
-    --self.Power:Hide()
-    --self:Hide()
-    --self:SetBackdropColor(0, 0, 0, 0)
-    --self:RegisterEvent('PLAYER_REGEN_DISABLED', oncombat)
-    --self:RegisterEvent('PLAYER_REGEN_ENABLED', onnocombat)
 end
 
 --make sure oUF knows about us and uses us.
@@ -125,47 +105,62 @@ oUF:SetActiveStyle('PowerBar')
 --no support for other units is present
 local player = oUF:Spawn('player', pbn)
 player:SetPoint('CENTER', UIParent, 'CENTER')
-local target = nil
+--Set the oldUnit to 'player' so that the frame will show correctly.
+player:SetAttribute('oldUnit', 'player')
+--set unit to nil to hide the frame by default
+player:SetAttribute('unit', nil)
 
-
+driverstr=''
 if(select(2, UnitClass('player')) == 'DRUID') then
-    local _STATE = CreateFrame("Frame", nil, UIParent, 'SecureHandlerStateTemplate')
-    --SecureHandler_OnLoad(_STATE)
-    RegisterStateDriver(_STATE, 'kitty', '[stance:3,combat] cat; nocat')
- 
+    driverstr = '[stance:3,combat] cat; nocat'
+elseif(select(2, UnitClass('player')) == 'ROGUE') then
+    driverstr = '[combat] cat; [stance:1] cat; nocat'
+end
+
+if(driverstr ~= '') then
+    --create a secure frame to run code fo us in combat.
+    --it must be a inherant SecureHandlerStateTemplate to work
+    local _STATE = CreateFrame("Frame", nil, UIParent,
+                               'SecureHandlerStateTemplate')
+    --Register for a "macro" state. any valid macro conditional works here
+    RegisterStateDriver(_STATE, 'kitty', driverstr)
+    --self, stateid, newstate will be set for you inside the [[foo]]
+    --Setting attr 'unit' to nil, makes the frame go away, setting it to
+    -- to 'player', 'target', etc. 
     _STATE:SetAttribute('_onstate-kitty', [[
-    Print("CHANGE!")
     if(newstate == 'cat') then
-        for k, frame in pairs(CAT_FRAMES) do
-            frame:SetAttribute('unit', frame:GetAttribute('oldUnit'))
-            frame:SetAttribute('oldUnit', nil)
-            frame:Show()
-            Print("SHOW!")
-        end
+        local frame = self:GetFrameRef('powerbar')
+        frame:SetAttribute('unit', frame:GetAttribute('oldUnit'))
+        frame:SetAttribute('oldUnit', nil)
     else
-        for k, frame in pairs(CAT_FRAMES) do
-            frame:SetAttribute('oldUnit', frame:GetAttribute('unit'))
-            frame:SetAttribute('unit', nil)
-            frame:Hide()
-            frame:SetBackdropColor(0, 0, 0, 0)
-            Print("HIDE!")
-        end
+        local frame = self:GetFrameRef('powerbar')
+        frame:SetAttribute('oldUnit', frame:GetAttribute('unit'))
+        frame:SetAttribute('unit', nil)
     end
     ]])
-    _STATE:Execute[[
-    CAT_FRAMES = newtable()
-    ]]
- 
-    -- The frames in question.
-    for _, frame in pairs{
-        player,
-        --target,
-    } do
-        DEFAULT_CHAT_FRAME:AddMessage("Adding a frame")
-        _STATE:SetFrameRef('frame', frame)
-        _STATE:Execute([[table.insert(CAT_FRAMES, self:GetFrameRef('frame'))]])
-    end
-    --_STATE:SetFrameRef('frame', player)
-    --_STATE:Execute([[table.insert(CAT_FRAMES, self:GetFrameRef('frame')]])
+    --with a single frame this seems to be a better idea.
+    --This lets us set a referance to a frame.
+    --SetFrameRef('NAME', frameobject)
+    _STATE:SetFrameRef('powerbar', player)
 
+    --The below would be for doing a large number of frames at once.
+    --You need to iterate over the table in the _onstate-foo code to get
+    -- the frames you so you can show/hide them by changing the unit to nil
+    -- this will cause the frame to dissapear.
+    --
+    --Create a table in the secure frame to hold a list of frame objects.
+    --_STATE:Execute[[
+    --CAT_FRAMES = newtable()
+    --]]
+ 
+    ---- The frame objects in question.
+    --for _, frame in pairs{
+        --player,
+        ----target,
+    --} do
+        --Set a referance inside of _STATE to the frame.
+        --_STATE:SetFrameRef('frame', frame) 
+        --add the referance to the CAT_FRAMES table.
+        --_STATE:Execute([[table.insert(CAT_FRAMES, self:GetFrameRef('frame'))]])
+    --end
 end
