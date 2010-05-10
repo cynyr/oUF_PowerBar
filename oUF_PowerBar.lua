@@ -110,33 +110,11 @@ local function style(self, unit)
         --enable /omf for moving the frame.
         --actully /omf doesn't need addon support, but the otherone does.
     end
-    self.Power:Hide()
-    self:Hide()
-    self:SetBackdropColor(0, 0, 0, 0)
-    if (select(2, UnitClass('player')) == 'ROGUE') then 
-        statestr = '[combat] bar; nobar'
-    elseif (select(2, UnitClass('player')) == 'DRUID') then
-        statestr = '[stance:3,combat] bar; nobar'
-    end
-    statestr = '[combat] bar; nobar'
-    RegisterStateDriver(self, 'bar', statestr)
-    self:SetAttribute('_onstate-bar', [[
-    if(newstate == 'bar') then
-			self:Show()
-	else
-			self:Hide()
-	end
-    ]])
-    self:RegisterEvent('PLAYER_REGEN_DISABLED', oncombat)
-    self:RegisterEvent('PLAYER_REGEN_ENABLED', onnocombat)
-    --self.Power:Execute([[ POWER_FRAMES = newtable() ]])
-    --self.Power:SetFrameRef("powerFrame", self)
-    --self.Power:Execute([[
-		--local frame = self:GetFrameRef("powerFrame")
-		--table.insert(POWER_FRAMES, frame)
-    --]])
-
-
+    --self.Power:Hide()
+    --self:Hide()
+    --self:SetBackdropColor(0, 0, 0, 0)
+    --self:RegisterEvent('PLAYER_REGEN_DISABLED', oncombat)
+    --self:RegisterEvent('PLAYER_REGEN_ENABLED', onnocombat)
 end
 
 --make sure oUF knows about us and uses us.
@@ -145,22 +123,32 @@ oUF:SetActiveStyle('PowerBar')
 
 --spawn the frame, needs to be tied to player.
 --no support for other units is present
-oUF:Spawn('player', pbn):SetPoint('CENTER', UIParent, 'CENTER')
+local player = oUF:Spawn('player', pbn)
+player:SetPoint('CENTER', UIParent, 'CENTER')
+local target = nil
+
 
 if(select(2, UnitClass('player')) == 'DRUID') then
     local _STATE = CreateFrame("Frame", nil, UIParent, 'SecureHandlerStateTemplate')
+    --SecureHandler_OnLoad(_STATE)
     RegisterStateDriver(_STATE, 'kitty', '[stance:3,combat] cat; nocat')
  
     _STATE:SetAttribute('_onstate-kitty', [[
+    DEFAULT_CHAT_FRAME:AddMessage("CHANGE!")
     if(newstate == 'cat') then
         for k, frame in pairs(CAT_FRAMES) do
-            frame:SetAttribute('unit', frame:GetAttribute('oldUnit'))
-            frame:SetAttribute('oldUnit', nil)
+            --frame:SetAttribute('unit', frame:GetAttribute('oldUnit'))
+            --frame:SetAttribute('oldUnit', nil)
+            frame:Show()
+            DEFAULT_CHAT_FRAME:AddMessage("SHOW!")
         end
     else
         for k, frame in pairs(CAT_FRAMES) do
-            frame:SetAttribute('oldUnit', frame:GetAttribute('unit'))
-            frame:SetAttribute('unit', nil)
+            --frame:SetAttribute('oldUnit', frame:GetAttribute('unit'))
+            --frame:SetAttribute('unit', nil)
+            frame:Hide()
+            frame:SetBackdropColor(0, 0, 0, 0)
+            DEFAULT_CHAT_FRAME:AddMessage("HIDE!")
         end
     end
     ]])
@@ -173,7 +161,11 @@ if(select(2, UnitClass('player')) == 'DRUID') then
         player,
         --target,
     } do
+        DEFAULT_CHAT_FRAME:AddMessage("Adding a frame")
         _STATE:SetFrameRef('frame', frame)
-        _STATE:Execute[[table.insert(CAT_FRAMES, self:GetFrameRef'frame')]]
+        _STATE:Execute([[table.insert(CAT_FRAMES, self:GetFrameRef('frame'))]])
     end
+    --_STATE:SetFrameRef('frame', player)
+    --_STATE:Execute([[table.insert(CAT_FRAMES, self:GetFrameRef('frame')]])
+
 end
