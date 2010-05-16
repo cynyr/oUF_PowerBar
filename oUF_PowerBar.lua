@@ -112,9 +112,9 @@ player:SetAttribute('unit', nil)
 
 driverstr=''
 if(select(2, UnitClass('player')) == 'DRUID') then
-    driverstr = '[stance:3,combat] cat; nocat'
+    driverstr = '[stance:3,combat] show; hide'
 elseif(select(2, UnitClass('player')) == 'ROGUE') then
-    driverstr = '[combat] cat; [stance:1] cat; nocat'
+    driverstr = '[combat] show; [stance:1] show; hide'
 end
 
 if(driverstr ~= '') then
@@ -128,7 +128,7 @@ if(driverstr ~= '') then
     --Setting attr 'unit' to nil, makes the frame go away, setting it to
     -- to 'player', 'target', etc. 
     _STATE:SetAttribute('_onstate-kitty', [[
-    if(newstate == 'cat') then
+    if(newstate == 'show') then
         local frame = self:GetFrameRef('powerbar')
         frame:SetAttribute('unit', frame:GetAttribute('oldUnit'))
         frame:SetAttribute('oldUnit', nil)
