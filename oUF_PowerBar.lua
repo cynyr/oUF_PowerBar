@@ -84,7 +84,7 @@ local function style(self, unit)
 	    local power = self.Power:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmallLeft')
 	    power:SetPoint('CENTER', self.Power, 'CENTER')
 	    power.frequentUpdates = 0.1
-	    self:Tag(power, '[ppower][( )druidpower]')
+	    self:Tag(power, '[ppower][druidpower]')
         
         --Use oUF_BarFader to fade the bar.
         if(unit=="player" and IsAddOnLoaded("oUF_BarFader")) then
