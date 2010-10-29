@@ -15,7 +15,7 @@
 local minalpha = 0          --Minimum alpha to show the power bar at(OOC)
 local maxalpha = 1          --Maximum alpha to show the power bar at(combat)
 local pbn="oUF_PowerBar"    --Nice place for the name of the bar
-local height=8              --Height of the power bar
+local height=10             --Height of the power bar
 local width=150             --Width of the power bar
 
 --The texture for the bar.
@@ -49,7 +49,7 @@ local function menu(self)
 	end
 end
 
-local function style(self, unit)
+local function style(self, unit, isSingle)
     if((select(2, UnitClass('player')) == 'ROGUE') or 
        (select(2, UnitClass('player')) == 'DRUID')
        ) then
@@ -61,6 +61,9 @@ local function style(self, unit)
         --set the size of the frame.
         self:SetAttribute('initial-height', height)
 	    self:SetAttribute('initial-width', width)
+        if(isSingle) then
+        self:SetSize(width, height)
+        end
         
         --set the backdrop
 	    self:SetBackdrop(backdrop)
@@ -97,14 +100,22 @@ local function style(self, unit)
     end
 end
 
+local UnitSpecific = {
+    player = function(self, ...)
+        print("running the style function")
+        style(self, ...)
+    end
+}
+
 --make sure oUF knows about us and uses us.
 oUF:RegisterStyle('PowerBar', style)
 oUF:SetActiveStyle('PowerBar')
 
 --spawn the frame, needs to be tied to player.
 --no support for other units is present
+print("Spawing: " .. pbn .. " Now!")
 local player = oUF:Spawn('player', pbn)
-player:SetPoint('CENTER', UIParent, 'CENTER')
+player:SetPoint('CENTER', UIParent, 0, 0)
 --Set the oldUnit to 'player' so that the frame will show correctly.
 player:SetAttribute('oldUnit', 'player')
 --set unit to nil to hide the frame by default
