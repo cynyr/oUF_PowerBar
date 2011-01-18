@@ -50,9 +50,8 @@ local function menu(self)
 end
 
 local function style(self, unit, isSingle)
-    if((select(2, UnitClass('player')) == 'ROGUE') or 
-       (select(2, UnitClass('player')) == 'DRUID')
-       ) then
+    local class =select(2, UnitClass('player'))
+    if(class == 'ROGUE') or (class == 'DRUID') or (class == 'HUNTER') then
 	    self.colors = colors
         
         --not having the below should make it clickthough-able.
@@ -122,10 +121,13 @@ player:SetAttribute('oldUnit', 'player')
 player:SetAttribute('unit', nil)
 
 driverstr=''
-if(select(2, UnitClass('player')) == 'DRUID') then
+local class = select(2, UnitClass('player'))
+if(class == 'DRUID') then
     driverstr = '[stance:3,combat] show; hide'
-elseif(select(2, UnitClass('player')) == 'ROGUE') then
+elseif(class == 'ROGUE') then
     driverstr = '[combat] show; [stance:1] show; hide'
+else
+    driverstr = '[combat] show;hide'
 end
 
 if(driverstr ~= '') then
